@@ -2,31 +2,43 @@
 
 import { useRouter } from "next/navigation";
 
-export function ScenarioCard({ scenario, query }: { scenario: string; query: string }) {
+export function ScenarioCard({
+    scenario,
+    query,
+    onSelect,
+    isSelected
+}: {
+    scenario: { id: string; text: string; summary: string; icon?: string };
+    query: string;
+    onSelect?: (scenarioText: string) => void;
+    isSelected?: boolean;
+}) {
     const router = useRouter();
 
     const handleClick = () => {
-        // Navigate to result, passing query and scenario
-        const params = new URLSearchParams();
-        params.set("q", query);
-        params.set("scenario", scenario);
-        router.push(`/result?${params.toString()}`);
+        if (onSelect) {
+            onSelect(scenario.text);
+        } else {
+            const params = new URLSearchParams();
+            params.set("q", query);
+            params.set("scenario", scenario.text);
+            router.push(`/result?${params.toString()}`);
+        }
     };
 
     return (
-        <div
+        <button
             onClick={handleClick}
-            className="group relative flex h-full min-h-[200px] cursor-pointer flex-col justify-between overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg ring-1 ring-slate-100"
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all active:scale-95 shadow-sm ring-1 ${isSelected
+                    ? "bg-blue-600 text-white ring-blue-600 shadow-md transform -translate-y-0.5"
+                    : "bg-white text-slate-700 ring-slate-200 hover:-translate-y-0.5 hover:bg-white hover:text-blue-700 hover:ring-blue-400"
+                }`}
         >
-            <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 transition-opacity group-hover:opacity-100" />
-
-            <p className="text-lg font-medium leading-relaxed text-slate-700 group-hover:text-slate-900 break-keep">
-                {scenario}
-            </p>
-
-            <div className="mt-6 flex items-center justify-end text-sm font-semibold text-blue-600 opacity-0 transition-opacity group-hover:opacity-100">
-                여행 계획 보기 &rarr;
-            </div>
-        </div>
+            <span className="text-lg">{scenario.icon || "✈️"}</span>
+            <span className="truncate max-w-[300px] md:max-w-none">{scenario.text}</span>
+            <span className={`transition-opacity ${isSelected ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}>
+                {isSelected ? "✓" : "→"}
+            </span>
+        </button>
     );
 }
