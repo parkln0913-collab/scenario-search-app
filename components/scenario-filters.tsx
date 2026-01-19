@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
 const FILTERS = {
@@ -23,38 +22,37 @@ const FILTERS = {
     },
 };
 
-export function ScenarioFilters() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+interface ScenarioFiltersProps {
+    onApplyFilters?: (filters: { companion?: string; theme?: string; age?: string; travelType?: string }) => void;
+    isPending?: boolean;
+}
 
-    // Initialize state from URL params
-    const [selectedCompanion, setSelectedCompanion] = useState<string>(searchParams.get("companion") || "");
-    const [selectedTheme, setSelectedTheme] = useState<string>(searchParams.get("theme") || "");
-    const [selectedAge, setSelectedAge] = useState<string>(searchParams.get("age") || "");
-    const [selectedTravelType, setSelectedTravelType] = useState<string>(searchParams.get("travelType") || "");
+export function ScenarioFilters({ onApplyFilters, isPending: externalPending }: ScenarioFiltersProps) {
+    // Local state for filter selections (not tied to URL)
+    const [selectedCompanion, setSelectedCompanion] = useState<string>("");
+    const [selectedTheme, setSelectedTheme] = useState<string>("");
+    const [selectedAge, setSelectedAge] = useState<string>("");
+    const [selectedTravelType, setSelectedTravelType] = useState<string>("");
     const [isPending, setIsPending] = useState(false);
 
     const [isOpen, setIsOpen] = useState(false);
 
     const handleApply = () => {
-        setIsPending(true);
-        const params = new URLSearchParams(searchParams.toString());
-
-        if (selectedCompanion) params.set("companion", selectedCompanion);
-        else params.delete("companion");
-
-        if (selectedTheme) params.set("theme", selectedTheme);
-        else params.delete("theme");
-
-        if (selectedAge) params.set("age", selectedAge);
-        else params.delete("age");
-
-        if (selectedTravelType) params.set("travelType", selectedTravelType);
-        else params.delete("travelType");
-
-        router.push(`/scenarios?${params.toString()}`);
-        setIsPending(false);
-        setIsOpen(false);
+        if (onApplyFilters) {
+            // Call the parent's callback with selected filters
+            onApplyFilters({
+                companion: selectedCompanion || undefined,
+                theme: selectedTheme || undefined,
+                age: selectedAge || undefined,
+                travelType: selectedTravelType || undefined,
+            });
+            // Reset filter selections after applying
+            setSelectedCompanion("");
+            setSelectedTheme("");
+            setSelectedAge("");
+            setSelectedTravelType("");
+            setIsOpen(false);
+        }
     };
 
     const handleClear = () => {
@@ -63,6 +61,8 @@ export function ScenarioFilters() {
         setSelectedAge("");
         setSelectedTravelType("");
     };
+
+    const isLoading = externalPending || isPending;
 
     return (
         <div className="overflow-hidden">
@@ -183,10 +183,10 @@ export function ScenarioFilters() {
                         </button>
                         <button
                             onClick={handleApply}
-                            disabled={isPending}
+                            disabled={isLoading || (!selectedCompanion && !selectedTheme && !selectedAge && !selectedTravelType)}
                             className="rounded-lg bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-95"
                         >
-                            {isPending ? "반영 중..." : "새로운 추천 받기"}
+                            {isLoading ? "반영 중..." : "새로운 추천 받기"}
                         </button>
                     </div>
                 </div>

@@ -104,6 +104,33 @@ export default function ScenariosPage({
         }
     };
 
+    // Handle filter application - only re-render results, not the whole page
+    const [isFilterPending, setIsFilterPending] = useState(false);
+    const [appliedFilters, setAppliedFilters] = useState<{ companion?: string; theme?: string; age?: string; travelType?: string } | null>(null);
+
+    const handleFilterApply = async (filters: { companion?: string; theme?: string; age?: string; travelType?: string }) => {
+        setIsFilterPending(true);
+        setIsLoadingResults(true);
+        setSelectedScenario(null); // Clear selected scenario
+        setAppliedFilters(filters); // Store applied filters for display
+
+        try {
+            // Call API with the selected filters (not URL params)
+            const data = await getInitialDashboardAction(query as string, filters);
+            if (data) {
+                // Update only the results, not scenarios or summary
+                setResults(null); // Clear scenario-specific results
+                setInitialData(data); // Update with filter-based results
+            }
+        } catch (err) {
+            console.error("Filter Apply Error:", err);
+        } finally {
+            setIsFilterPending(false);
+            setIsLoadingResults(false);
+            // Keep appliedFilters for title display (don't clear it here)
+        }
+    };
+
     if (isLoadingInit) {
         return (
             <div className="flex h-screen flex-col items-center justify-center bg-slate-50 p-4">
@@ -201,7 +228,7 @@ export default function ScenariosPage({
                         </div>
                     </div>
                     <div className="border-t border-slate-100 bg-slate-50/50">
-                        <ScenarioFilters />
+                        <ScenarioFilters onApplyFilters={handleFilterApply} isPending={isFilterPending} />
                     </div>
                 </div>
 
@@ -221,6 +248,13 @@ export default function ScenariosPage({
                                 <h2 className="text-xl font-bold text-slate-900">
                                     {selectedScenario ? (
                                         `"${selectedScenario}" 맞춤 추천`
+                                    ) : appliedFilters && (appliedFilters.companion || appliedFilters.theme || appliedFilters.age || appliedFilters.travelType) ? (
+                                        <span className="flex flex-wrap gap-1">
+                                            {[appliedFilters.companion, appliedFilters.theme, appliedFilters.age, appliedFilters.travelType].filter(Boolean).map(val => (
+                                                <span key={val} className="text-blue-600">#{val}</span>
+                                            ))}
+                                            <span className="ml-1 font-bold text-slate-900">관련 추천 정보</span>
+                                        </span>
                                     ) : (companion || theme || age || travelType) ? (
                                         <span className="flex flex-wrap gap-1">
                                             {[companion, theme, age, travelType].filter(Boolean).map(val => (
