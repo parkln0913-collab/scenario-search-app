@@ -6,7 +6,7 @@ import { EventSource } from "eventsource";
 // @ts-ignore
 global.EventSource = EventSource;
 
-const MCP_SERVER_URL = "http://127.0.0.1:8000/sse";
+const MCP_SERVER_URL = process.env.MCP_SERVER_URL || "https://scenario-mcp-server.onrender.com/sse";
 
 export async function callMcpTool(toolName: string, args: any) {
     const transport = new SSEClientTransport(new URL(MCP_SERVER_URL));
